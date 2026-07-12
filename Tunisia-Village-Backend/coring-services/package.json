@@ -1,0 +1,48 @@
+{
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "migrate:make": "npm run db:generate",
+    "migrate:up": "npm run db:migrate",
+    "commit:auth": "git add . && git commit -m \"feat: implement authentication module and core infrastructure\n\n- Add auth service with user registration flow\n- Add JWT token generation utilities with bcrypt password hashing\n- Add user entity, enum, and repository with database queries\n- Add customer-address and password-reset entities\n- Add auth controller, routes, and DTOs with validation\n- Add migration scripts for database schema management\n- Add validation middleware using class-validator\n- Add centralized error handling with AppError class\n- Add correlation ID middleware for request tracking\n- Add logger utility for structured logging\n- Add Express type extensions for request context\n- Add knexfile configuration\n- Update tsconfig with decorator support for class-validator\n- Install dependencies: bcrypt, jsonwebtoken, class-validator, class-transformer\n\nBREAKING CHANGE: Schema now requires ACCESS_TOKEN_SECRET and ACCESS_REFRESH_TOKEN_SECRET env vars\""
+  },
+  "dependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "cloudinary": "^2.10.0",
+    "cookie-parser": "^1.4.7",
+    "crypto": "^1.0.1",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "google-auth-library": "^10.7.0",
+    "jsonwebtoken": "^9.0.3",
+    "pdfkit": "^0.19.1",
+    "pg": "^8.20.0",
+    "reflect-metadata": "^0.2.2",
+    "streamifier": "^0.1.1",
+    "transformer": "^1.2.8",
+    "uuid": "^14.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^25.8.0",
+    "@types/pdfkit": "^0.17.6",
+    "@types/pg": "^8.20.0",
+    "@types/streamifier": "^0.1.2",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^10.4.0",
+    "prettier": "^3.8.3",
+    "tsx": "^4.22.0",
+    "typescript": "^6.0.3"
+  }
+}

@@ -1,0 +1,1 @@
+export const NotServiceProviderError = new Error("You are not authorized to perform this action")
