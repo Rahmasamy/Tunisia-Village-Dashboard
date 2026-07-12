@@ -1,9 +1,9 @@
 {
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsx watch src/server.ts",
-    "start": "node dist/server.js",
+    "build": "node init && tsc",
+    "dev": "node init && tsx watch src/server.ts",
+    "start": "node init && node dist/server.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "migrate:make": "npm run db:generate",
