@@ -1,0 +1,677 @@
+"use client";
+
+import React, { useState } from 'react';
+import { Sun, Plus, ChevronDown, ChevronUp, Trash2, X, Star, Utensils, Home, HelpCircle, Search } from 'lucide-react';
+import ReusableButton from '@/src/shared/components/common/Buttons/ReusableButton';
+
+interface Attraction {
+  name: string;
+  description: string;
+  duration: number; // in minutes
+  passBy: boolean;
+  admission: 'yes' | 'no' | 'free';
+}
+
+interface Day {
+  id: number;
+  title: string;
+  attractions: Attraction[];
+  meals: string[];
+  accommodations: string[];
+}
+
+export default function TourDetails() {
+  // Mock initial days
+  const [days, setDays] = useState<Day[]>([
+    {
+      id: 1,
+      title: 'مصر - الفيوم - الشلالات',
+      attractions: [
+        {
+          name: 'شلالات وادي الريان',
+          description: 'الاستمتاع بالمناظر الطبيعية والتقاط الصور التذكارية بجانب الشلالات الرائعة.',
+          duration: 120,
+          passBy: false,
+          admission: 'free'
+        }
+      ],
+      meals: ['غداء ريفي تقليدي'],
+      accommodations: ['مخيم وادي الريان']
+    },
+    {
+      id: 2,
+      title: 'رحلة جبل المدورة والبحيرة السحرية',
+      attractions: [],
+      meals: [],
+      accommodations: []
+    }
+  ]);
+
+  // UI States
+  const [expandedDays, setExpandedDays] = useState<Record<number, boolean>>({ 1: true, 2: true });
+  
+  // Modals States
+  const [activeDayId, setActiveDayId] = useState<number | null>(null);
+  
+  // Attraction Modal State
+  const [isAttractionModalOpen, setIsAttractionModalOpen] = useState(false);
+  const [attractionName, setAttractionName] = useState('');
+  const [attractionDesc, setAttractionDesc] = useState('');
+  const [durationValue, setDurationValue] = useState(120);
+  const [durationUnit, setDurationUnit] = useState<'minutes' | 'hours'>('minutes');
+  const [passBy, setPassBy] = useState(false);
+  const [admission, setAdmission] = useState<'yes' | 'no' | 'free'>('yes');
+
+  // Meal Modal State
+  const [isMealModalOpen, setIsMealModalOpen] = useState(false);
+  const [mealType, setMealType] = useState('غداء');
+  const [mealDetails, setMealDetails] = useState('');
+
+  // Accommodation Modal State
+  const [isAccommodationModalOpen, setIsAccommodationModalOpen] = useState(false);
+  const [accommodationName, setAccommodationName] = useState('');
+  const [accommodationType, setAccommodationType] = useState('فندق');
+
+  // Accordion Toggle
+  const toggleDay = (id: number) => {
+    setExpandedDays(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const toggleAllDays = () => {
+    const allExpanded = days.every(d => expandedDays[d.id]);
+    const newState: Record<number, boolean> = {};
+    days.forEach(d => {
+      newState[d.id] = !allExpanded;
+    });
+    setExpandedDays(newState);
+  };
+
+  // Add/Remove Days
+  const handleAddDay = () => {
+    const newId = days.length > 0 ? Math.max(...days.map(d => d.id)) + 1 : 1;
+    const newDay: Day = {
+      id: newId,
+      title: '',
+      attractions: [],
+      meals: [],
+      accommodations: []
+    };
+    setDays([...days, newDay]);
+    setExpandedDays(prev => ({ ...prev, [newId]: true }));
+  };
+
+  const handleRemoveDay = (id: number) => {
+    if (confirm('هل أنت متأكد من حذف هذا اليوم بالكامل؟')) {
+      setDays(days.filter(d => d.id !== id));
+    }
+  };
+
+  const handleDayTitleChange = (id: number, value: string) => {
+    setDays(days.map(d => d.id === id ? { ...d, title: value } : d));
+  };
+
+  // Attraction Add Actions
+  const openAttractionModal = (dayId: number) => {
+    setActiveDayId(dayId);
+    setAttractionName('');
+    setAttractionDesc('');
+    setDurationValue(120);
+    setDurationUnit('minutes');
+    setPassBy(false);
+    setAdmission('yes');
+    setIsAttractionModalOpen(true);
+  };
+
+  const handleAddAttractionSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!attractionName.trim()) return;
+
+    const durationInMinutes = durationUnit === 'hours' ? durationValue * 60 : durationValue;
+
+    const newAttraction: Attraction = {
+      name: attractionName,
+      description: attractionDesc,
+      duration: durationInMinutes,
+      passBy,
+      admission
+    };
+
+    setDays(days.map(d => {
+      if (d.id === activeDayId) {
+        return {
+          ...d,
+          attractions: [...d.attractions, newAttraction]
+        };
+      }
+      return d;
+    }));
+
+    setIsAttractionModalOpen(false);
+  };
+
+  const handleRemoveAttraction = (dayId: number, index: number) => {
+    setDays(days.map(d => {
+      if (d.id === dayId) {
+        return {
+          ...d,
+          attractions: d.attractions.filter((_, idx) => idx !== index)
+        };
+      }
+      return d;
+    }));
+  };
+
+  // Meal Add Actions
+  const openMealModal = (dayId: number) => {
+    setActiveDayId(dayId);
+    setMealType('غداء');
+    setMealDetails('');
+    setIsMealModalOpen(true);
+  };
+
+  const handleAddMealSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const mealText = mealDetails.trim() ? `${mealType} (${mealDetails})` : mealType;
+    setDays(days.map(d => {
+      if (d.id === activeDayId) {
+        return {
+          ...d,
+          meals: [...d.meals, mealText]
+        };
+      }
+      return d;
+    }));
+    setIsMealModalOpen(false);
+  };
+
+  const handleRemoveMeal = (dayId: number, index: number) => {
+    setDays(days.map(d => {
+      if (d.id === dayId) {
+        return {
+          ...d,
+          meals: d.meals.filter((_, idx) => idx !== index)
+        };
+      }
+      return d;
+    }));
+  };
+
+  // Accommodation Add Actions
+  const openAccommodationModal = (dayId: number) => {
+    setActiveDayId(dayId);
+    setAccommodationName('');
+    setAccommodationType('فندق');
+    setIsAccommodationModalOpen(true);
+  };
+
+  const handleAddAccommodationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!accommodationName.trim()) return;
+    const accText = `${accommodationType}: ${accommodationName}`;
+    setDays(days.map(d => {
+      if (d.id === activeDayId) {
+        return {
+          ...d,
+          accommodations: [...d.accommodations, accText]
+        };
+      }
+      return d;
+    }));
+    setIsAccommodationModalOpen(false);
+  };
+
+  const handleRemoveAccommodation = (dayId: number, index: number) => {
+    setDays(days.map(d => {
+      if (d.id === dayId) {
+        return {
+          ...d,
+          accommodations: d.accommodations.filter((_, idx) => idx !== index)
+        };
+      }
+      return d;
+    }));
+  };
+
+  return (
+    <div className="space-y-8 text-right animate-in fade-in duration-300 relative" dir="rtl">
+      {/* Header Breadcrumbs */}
+      <div className="text-sm font-bold text-gray-400 flex items-center gap-1.5 justify-start">
+        <span>المنتجات</span>
+        <span>&gt;</span>
+        <span>ب-محتوى المنتج</span>
+        <span>&gt;</span>
+        <span className="text-[#334bb1]">2.ب.تفاصيل الجولة</span>
+      </div>
+
+      {/* Title Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+        <div className="space-y-1">
+          <h1 className="text-xl md:text-2xl font-black text-gray-800">أخبرنا عن جولتك</h1>
+          <p className="text-xs text-gray-400 font-semibold leading-relaxed">
+            صف ما سيراه المسافرون كل يوم، وما هي الوجبات المتضمنة.
+          </p>
+        </div>
+        <button
+          onClick={toggleAllDays}
+          className="text-xs font-bold text-[#334bb1] bg-blue-50/50 hover:bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100 transition-colors"
+        >
+          ضغط تفاصيل كل الأيام
+        </button>
+      </div>
+
+      {/* Accordion Days List */}
+      <div className="space-y-6 max-w-4xl">
+        {days.map((day, index) => {
+          const isExpanded = expandedDays[day.id];
+          return (
+            <div key={day.id} className="border border-blue-150 rounded-3xl bg-white shadow-xs overflow-hidden transition-all duration-300">
+              {/* Accordion Trigger */}
+              <div
+                onClick={() => toggleDay(day.id)}
+                className="p-5 px-6 bg-slate-50/30 border-b border-slate-50 flex items-center justify-between cursor-pointer select-none"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 shadow-2xs">
+                    <Sun size={20} className="fill-amber-500/10 animate-spin-slow" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="block font-black text-gray-800 text-[16px]">
+                      اليوم {index + 1 === 1 ? 'الأول' : index + 1 === 2 ? 'الثاني' : index + 1 === 3 ? 'الثالث' : index + 1 === 4 ? 'الرابع' : `${index + 1}`}
+                    </span>
+                    {day.title && <span className="block text-xs font-bold text-gray-400">{day.title}</span>}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => handleRemoveDay(day.id)}
+                    className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    title="حذف اليوم"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => toggleDay(day.id)}
+                    className="p-2 rounded-xl text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Accordion Body */}
+              {isExpanded && (
+                <div className="p-6 md:p-8 space-y-6 animate-in slide-in-from-top-2 duration-300">
+                  {/* Day Title input */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-black text-gray-700">-أعط يومك عنواناً</label>
+                    <input
+                      type="text"
+                      value={day.title}
+                      onChange={(e) => handleDayTitleChange(day.id, e.target.value)}
+                      placeholder="على سبيل المثال: مصر - الفيوم - الشلالات"
+                      className="w-full py-3.5 pr-4 pl-10 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-[#334bb1] font-bold text-gray-850 text-right shadow-2xs hover:border-gray-300 transition-colors"
+                    />
+                  </div>
+
+                  {/* Program sections */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                    {/* Section 1: Attractions / Program */}
+                    <div className="space-y-4 border-l md:border-l border-dashed border-gray-150 pl-0 md:pl-6 last:border-l-0">
+                      <div className="flex items-center justify-between">
+                        <span className="font-black text-gray-800 text-sm flex items-center gap-1.5">
+                          ⭐ برنامج الرحلة
+                        </span>
+                      </div>
+
+                      {/* Attractions list */}
+                      <div className="space-y-2">
+                        {day.attractions.map((attr, idx) => (
+                          <div key={idx} className="p-3 bg-gray-50 border border-gray-100 rounded-2xl relative group">
+                            <button
+                              onClick={() => handleRemoveAttraction(day.id, idx)}
+                              className="absolute top-2 left-2 p-1 rounded-md text-gray-400 hover:text-red-500 hover:bg-white transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <X size={12} />
+                            </button>
+                            <span className="block font-black text-xs text-[#334bb1] mb-1">{attr.name}</span>
+                            <p className="text-[10px] text-gray-400 font-bold leading-normal mb-1.5">{attr.description}</p>
+                            <div className="flex items-center gap-2 text-[9px] text-gray-400 font-black">
+                              <span className="bg-white border border-gray-200 px-1.5 py-0.5 rounded-md">
+                                {attr.duration} دقيقة
+                              </span>
+                              {attr.passBy && (
+                                <span className="bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-md">
+                                  مرور سريع
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() => openAttractionModal(day.id)}
+                        className="w-full py-3 border-2 border-dashed border-blue-100 rounded-2xl text-xs font-black text-[#334bb1] hover:bg-blue-50/20 hover:border-blue-200 transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <Plus size={14} />
+                        <span>أضف عامل جذب</span>
+                      </button>
+                    </div>
+
+                    {/* Section 2: Food and drinks */}
+                    <div className="space-y-4 border-l md:border-l border-dashed border-gray-150 pl-0 md:pl-6 last:border-l-0">
+                      <span className="font-black text-gray-800 text-sm flex items-center gap-1.5">
+                        <Utensils size={16} className="text-gray-500" /> الطعام والشراب
+                      </span>
+
+                      {/* Meals list */}
+                      <div className="space-y-2">
+                        {day.meals.map((meal, idx) => (
+                          <div key={idx} className="p-3 bg-gray-50 border border-gray-100 rounded-2xl relative group flex items-center justify-between">
+                            <span className="font-black text-xs text-gray-700">{meal}</span>
+                            <button
+                              onClick={() => handleRemoveMeal(day.id, idx)}
+                              className="p-1 rounded-md text-gray-400 hover:text-red-500 hover:bg-white transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() => openMealModal(day.id)}
+                        className="w-full py-3 border-2 border-dashed border-blue-100 rounded-2xl text-xs font-black text-[#334bb1] hover:bg-blue-50/20 hover:border-blue-200 transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <Plus size={14} />
+                        <span>أضف وجبة</span>
+                      </button>
+                    </div>
+
+                    {/* Section 3: Accommodation */}
+                    <div className="space-y-4">
+                      <span className="font-black text-gray-800 text-sm flex items-center gap-1.5">
+                        <Home size={16} className="text-gray-500" /> الإقامة
+                      </span>
+
+                      {/* Accommodations list */}
+                      <div className="space-y-2">
+                        {day.accommodations.map((acc, idx) => (
+                          <div key={idx} className="p-3 bg-gray-50 border border-gray-100 rounded-2xl relative group flex items-center justify-between">
+                            <span className="font-black text-xs text-gray-700">{acc}</span>
+                            <button
+                              onClick={() => handleRemoveAccommodation(day.id, idx)}
+                              className="p-1 rounded-md text-gray-400 hover:text-red-500 hover:bg-white transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() => openAccommodationModal(day.id)}
+                        className="w-full py-3 border-2 border-dashed border-blue-100 rounded-2xl text-xs font-black text-[#334bb1] hover:bg-blue-50/20 hover:border-blue-200 transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <Plus size={14} />
+                        <span>إضافة سكن</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bottom actions */}
+      <div className="max-w-4xl flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-100">
+        <button
+          onClick={handleAddDay}
+          className="w-full sm:w-fit py-3 px-6 border border-[#334bb1] rounded-2xl text-xs font-black text-[#334bb1] hover:bg-blue-50/30 transition-all flex items-center justify-center gap-1.5"
+        >
+          <Plus size={14} />
+          <span>أضف يوم جديد</span>
+        </button>
+
+        <ReusableButton variant="primary" onClick={() => alert('تم حفظ تفاصيل الجولة بنجاح!')}>
+          الحفظ و الإستمرار
+        </ReusableButton>
+      </div>
+
+      {/* ATTRACTION MODAL (Screen 5) */}
+      {isAttractionModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-5 px-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-[17px] font-black text-gray-800">إضافة عامل جذب</h3>
+              <button
+                onClick={() => setIsAttractionModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body Form */}
+            <form onSubmit={handleAddAttractionSubmit} className="p-6 space-y-5 overflow-y-auto max-h-[70vh]">
+              {/* Attraction Name */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black text-gray-600">إختر عامل جذب</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={attractionName}
+                    onChange={(e) => setAttractionName(e.target.value)}
+                    placeholder="على سبيل المثال: برج إيفيل، باريس..."
+                    required
+                    className="w-full py-3 pr-4 pl-10 bg-white border border-gray-250 rounded-2xl text-xs focus:outline-none focus:ring-1 focus:ring-[#334bb1] font-bold text-gray-800 text-right"
+                  />
+                  <Search size={16} className="absolute left-3.5 top-3.5 text-gray-400" />
+                </div>
+                <span className="block text-[10px] text-gray-400 font-bold">الموقع الجغرافي مطلوب</span>
+              </div>
+
+              {/* Attraction Description */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black text-gray-600">
+                  صف ما سوف يراه المسافرون ويفعلونه هنا إذا حجزوا تجربتك.
+                </label>
+                <textarea
+                  value={attractionDesc}
+                  onChange={(e) => setAttractionDesc(e.target.value)}
+                  placeholder="أدخل وصفاً مفصلاً لعامل الجذب والأنشطة..."
+                  maxLength={1000}
+                  rows={4}
+                  className="w-full p-4 bg-white border border-gray-250 rounded-2xl text-xs focus:outline-none focus:ring-1 focus:ring-[#334bb1] font-bold text-gray-800 text-right leading-relaxed"
+                />
+                <div className="flex justify-end text-[10px] text-gray-400 font-bold">
+                  {1000 - attractionDesc.length} حرف متبقية.
+                </div>
+              </div>
+
+              {/* Time Spent */}
+              <div className="space-y-3">
+                <label className="block text-xs font-black text-gray-600">كم من الوقت يقضيه المسافرون عادةً هنا؟</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    value={durationValue}
+                    onChange={(e) => setDurationValue(Number(e.target.value))}
+                    disabled={passBy}
+                    className="w-24 py-2.5 px-3 bg-white border border-gray-250 rounded-xl text-center text-xs font-black text-gray-850 focus:outline-none focus:ring-1 focus:ring-[#334bb1] disabled:bg-gray-50 disabled:text-gray-300"
+                  />
+                  <select
+                    value={durationUnit}
+                    onChange={(e) => setDurationUnit(e.target.value as 'minutes' | 'hours')}
+                    disabled={passBy}
+                    className="py-2.5 px-3 bg-white border border-gray-250 rounded-xl text-xs font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#334bb1] disabled:bg-gray-50 disabled:text-gray-300"
+                  >
+                    <option value="minutes">دقائق</option>
+                    <option value="hours">ساعات</option>
+                  </select>
+
+                  <label className="flex items-center gap-2 cursor-pointer select-none pl-4">
+                    <input
+                      type="checkbox"
+                      checked={passBy}
+                      onChange={(e) => setPassBy(e.target.checked)}
+                      className="w-4 h-4 text-[#334bb1] border-gray-300 focus:ring-[#334bb1] accent-[#334bb1]"
+                    />
+                    <span className="text-xs font-black text-gray-655">مرور دون توقف.</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Admission Price Option */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-gray-600">هل الدخول إلى هذا المكان متضمن في سعر الجولة؟</label>
+                <div className="flex flex-wrap gap-4 pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="admission"
+                      checked={admission === 'yes'}
+                      onChange={() => setAdmission('yes')}
+                      className="w-4 h-4 text-[#334bb1] accent-[#334bb1]"
+                    />
+                    <span className="text-xs font-bold text-gray-700">نعم</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="admission"
+                      checked={admission === 'no'}
+                      onChange={() => setAdmission('no')}
+                      className="w-4 h-4 text-[#334bb1] accent-[#334bb1]"
+                    />
+                    <span className="text-xs font-bold text-gray-700">لا</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="admission"
+                      checked={admission === 'free'}
+                      onChange={() => setAdmission('free')}
+                      className="w-4 h-4 text-[#334bb1] accent-[#334bb1]"
+                    />
+                    <span className="text-xs font-bold text-gray-700">غير متوفر (الدخول مجاني)</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Footer Modal Actions */}
+              <div className="pt-4 border-t border-gray-150 flex justify-end gap-3">
+                <ReusableButton variant="primary" type="submit">
+                  تم
+                </ReusableButton>
+                <ReusableButton variant="outline" onClick={() => setIsAttractionModalOpen(false)}>
+                  إلغاء
+                </ReusableButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MEAL MODAL */}
+      {isMealModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="p-5 px-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-[17px] font-black text-gray-800">إضافة وجبة</h3>
+              <button onClick={() => setIsMealModalOpen(false)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleAddMealSubmit} className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black text-gray-600">اختر نوع الوجبة</label>
+                <select
+                  value={mealType}
+                  onChange={(e) => setMealType(e.target.value)}
+                  className="w-full py-3 px-4 bg-white border border-gray-250 rounded-xl text-xs font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#334bb1]"
+                >
+                  <option value="فطور">فطور</option>
+                  <option value="غداء">غداء</option>
+                  <option value="عشاء">عشاء</option>
+                  <option value="وجبة خفيفة / سناك">وجبة خفيفة / سناك</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black text-gray-600">التفاصيل (اختياري)</label>
+                <input
+                  type="text"
+                  value={mealDetails}
+                  onChange={(e) => setMealDetails(e.target.value)}
+                  placeholder="مثال: وجبة نباتية، أسماك طازجة..."
+                  className="w-full py-3 px-4 bg-white border border-gray-250 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#334bb1] font-bold text-gray-800 text-right"
+                />
+              </div>
+              <div className="pt-4 border-t border-gray-150 flex justify-end gap-3">
+                <ReusableButton variant="primary" type="submit">
+                  تم
+                </ReusableButton>
+                <ReusableButton variant="outline" onClick={() => setIsMealModalOpen(false)}>
+                  إلغاء
+                </ReusableButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ACCOMMODATION MODAL */}
+      {isAccommodationModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="p-5 px-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-[17px] font-black text-gray-800">إضافة سكن</h3>
+              <button onClick={() => setIsAccommodationModalOpen(false)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleAddAccommodationSubmit} className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black text-gray-600">نوع السكن</label>
+                <select
+                  value={accommodationType}
+                  onChange={(e) => setAccommodationType(e.target.value)}
+                  className="w-full py-3 px-4 bg-white border border-gray-250 rounded-xl text-xs font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#334bb1]"
+                >
+                  <option value="فندق">فندق</option>
+                  <option value="مخيم / خيمة">مخيم / خيمة</option>
+                  <option value="نزل ضيافة">نزل ضيافة</option>
+                  <option value="منتجع">منتجع</option>
+                  <option value="شقة خاصة">شقة خاصة</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black text-gray-600">اسم السكن / التفاصيل</label>
+                <input
+                  type="text"
+                  value={accommodationName}
+                  onChange={(e) => setAccommodationName(e.target.value)}
+                  placeholder="مثال: فندق أوبروي الفيوم..."
+                  required
+                  className="w-full py-3 px-4 bg-white border border-gray-250 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#334bb1] font-bold text-gray-800 text-right"
+                />
+              </div>
+              <div className="pt-4 border-t border-gray-150 flex justify-end gap-3">
+                <ReusableButton variant="primary" type="submit">
+                  تم
+                </ReusableButton>
+                <ReusableButton variant="outline" onClick={() => setIsAccommodationModalOpen(false)}>
+                  إلغاء
+                </ReusableButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
